@@ -1,18 +1,36 @@
 #include <Arduino.h>
+extern "C" void neopixelWrite(uint8_t pin, uint8_t red_val, uint8_t green_val,
+                              uint8_t blue_val);
 
-#ifndef LED_BUILTIN
-constexpr uint8_t LED_PIN = 13;
-#else
-constexpr uint8_t LED_PIN = LED_BUILTIN;
-#endif
+constexpr uint8_t WS2812_PIN = 2;
 
 constexpr uint16_t UNIT_MS = 200;
+uint8_t colorIndex = 0;
+
+void setColorByIndex(uint8_t index) {
+  switch (index % 3) {
+    case 0:
+      neopixelWrite(WS2812_PIN, 255, 0, 0);  // Red
+      break;
+    case 1:
+      neopixelWrite(WS2812_PIN, 0, 255, 0);  // Green
+      break;
+    default:
+      neopixelWrite(WS2812_PIN, 0, 0, 255);  // Blue
+      break;
+  }
+}
+
+void ledOff() {
+  neopixelWrite(WS2812_PIN, 0, 0, 0);
+}
 
 void signalOnForUnits(uint8_t units) {
-  digitalWrite(LED_PIN, HIGH);
+  setColorByIndex(colorIndex);
   delay(UNIT_MS * units);
-  digitalWrite(LED_PIN, LOW);
+  ledOff();
   delay(UNIT_MS);
+  colorIndex = (colorIndex + 1) % 3;
 }
 
 void dot() { signalOnForUnits(1); }
@@ -39,13 +57,12 @@ void blinkO() {
 }
 
 void setup() {
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
+  ledOff();
 
   Serial.begin(115200);
   delay(500);
   Serial.println();
-  Serial.println("Starting SOS Morse blink");
+  Serial.println("Starting SOS Morse blink (WS2812 on GPIO 2)");
 }
 
 void loop() {
